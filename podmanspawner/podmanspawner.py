@@ -5,18 +5,14 @@
 
 import json
 import os
-import shlex
 from subprocess import Popen, PIPE
-from jupyterhub.traitlets import Command
 from traitlets import Bool
 from traitlets import Dict
 from traitlets import Integer
 from traitlets import List
 from traitlets import Unicode
-from traitlets import Unicode
 
 from jupyterhub.spawner import Spawner
-from jupyterhub.utils import random_port
 
 
 class PodmanSelfContainedSpawner(Spawner):
@@ -37,7 +33,8 @@ class PodmanSelfContainedSpawner(Spawner):
     cid = Unicode(
         allow_none=True,
         help="""
-        The container id (cid) of the single-user server container spawned for current user.
+        The container id (cid) of the single-user server container spawned for current
+        user.
         """,
     )
     image = Unicode(
@@ -56,33 +53,33 @@ class PodmanSelfContainedSpawner(Spawner):
     pull_image_first = Bool(
         False,
         help="""Run podman pull image, before podman run to circumvent current
-        transport problem."""
+        transport problem.""",
     )
     pull_image = Unicode(
         allow_none=True,
-        help="""When image should be pulled first, where to pull from?"""
+        help="""When image should be pulled first, where to pull from?""",
     )
 
     standard_jupyter_port = Integer(
         8888,
         help="""The standard port, the Jupyter Notebook is listening in the
-        container to."""
-        )
+        container to.""",
+    )
     https_proxy = Unicode(
         allow_none=True,
         help="""Is your server running behind a proxy? Podman needs to now, to
-        pull images correctly."""
-        ).tag(config=True)
+        pull images correctly.""",
+    ).tag(config=True)
 
     podman_additional_cmds = List(
         default_value=[],
         help="""These commands are appended to the podman_base_cmd. They are
-        then followed by the jupyter_base_cmd"""
-        ).tag(config=True)
+        then followed by the jupyter_base_cmd""",
+    ).tag(config=True)
     jupyter_additional_cmds = List(
         default_value=[],
-        help="""These commands are appended to the jupyter_base_cmd."""
-        ).tag(config=True)
+        help="""These commands are appended to the jupyter_base_cmd.""",
+    ).tag(config=True)
 
     remove = Bool(
         False,
@@ -93,22 +90,22 @@ class PodmanSelfContainedSpawner(Spawner):
     enable_lab = Bool(
         False,
         help="""Enable Jupyter Lab in the container via environment variable.
-        Dont forget to change c.Spawner.default_url = '/lab'."""
-        )
+        Dont forget to change c.Spawner.default_url = '/lab'.""",
+    )
 
     env_keep = List(
         [],
         help="""Override the env_keep of the Spawner calls, since we do not need
-        to keep these env variables in the container."""
-        )
+        to keep these env variables in the container.""",
+    )
 
     def load_state(self, state):
         """Restore state about spawned single-user server after a hub restart.
         Local processes only need the process id.
         """
         super().load_state(state)
-        if 'cid' in state:
-            self.cid = state['cid']
+        if "cid" in state:
+            self.cid = state["cid"]
 
     def get_state(self):
         """Save state that is needed to restore this spawner instance after a hub restore.
@@ -116,7 +113,7 @@ class PodmanSelfContainedSpawner(Spawner):
         """
         state = super().get_state()
         if self.cid:
-            state['cid'] = self.cid
+            state["cid"] = self.cid
         return state
 
     def clear_state(self):
@@ -127,15 +124,17 @@ class PodmanSelfContainedSpawner(Spawner):
     def user_env(self, env):
         """Augment environment of spawned process with user specific env variables."""
         if self.https_proxy:
-            env['https_proxy'] = self.https_proxy
+            env["https_proxy"] = self.https_proxy
         return env
 
     def get_env(self):
-        """Get the complete set of environment variables to be set in the spawned process."""
+        """Get the complete set of environment variables to be set in the spawned
+        process.
+        """
         env = super().get_env()
         env = {}
         if self.enable_lab:
-            env['JUPYTER_ENABLE_LAB'] = "yes"
+            env["JUPYTER_ENABLE_LAB"] = "yes"
         env["JUPYTER_IMAGE_SPEC"] = self.image
         return env
 
@@ -157,9 +156,12 @@ class PodmanSelfContainedSpawner(Spawner):
         self.port = self.standard_jupyter_port
 
         podman_base_cmd = [
-                "podman", "run", "-d",
-                "--publish", f"{self.standard_jupyter_port}",
-                ]
+            "podman",
+            "run",
+            "-d",
+            "--publish",
+            f"{self.standard_jupyter_port}",
+        ]
         if self.remove:
             podman_base_cmd.append("--rm")
         # append flags for the JUPYTER*** environment in the container
@@ -167,27 +169,28 @@ class PodmanSelfContainedSpawner(Spawner):
         podman_base_cmd_jupyter_env = []
         for k, v in jupyter_env.items():
             podman_base_cmd_jupyter_env.append("--env")
-            podman_base_cmd_jupyter_env.append("{k}={v}".format(k=k,v=v))
+            podman_base_cmd_jupyter_env.append("{k}={v}".format(k=k, v=v))
         podman_base_cmd += podman_base_cmd_jupyter_env
 
         jupyter_base_cmd = [self.image] + self.cmd + self.get_args()
 
-        podman_cmd = podman_base_cmd+self.podman_additional_cmds
-        jupyter_cmd = jupyter_base_cmd+self.jupyter_additional_cmds
+        podman_cmd = podman_base_cmd + self.podman_additional_cmds
+        jupyter_cmd = jupyter_base_cmd + self.jupyter_additional_cmds
 
         cmd = podman_cmd + jupyter_cmd
 
         env = self.user_env(os.environ.copy())
 
-        self.log.info("Spawning via Podman command: %s", ' '.join(s for s in cmd))
+        self.log.info("Spawning via Podman command: %s", " ".join(s for s in cmd))
 
         popen_kwargs = dict(
-            stdout=PIPE, stderr=PIPE,
+            stdout=PIPE,
+            stderr=PIPE,
             start_new_session=True,  # don't forward signals
         )
         popen_kwargs.update(self.popen_kwargs)
         # don't let user config override env
-        popen_kwargs['env'] = env
+        popen_kwargs["env"] = env
 
         # https://stackoverflow.com/questions/2502833/store-output-of-subprocess-popen-call-in-a-string
 
@@ -198,9 +201,7 @@ class PodmanSelfContainedSpawner(Spawner):
             if pull_proc.returncode == 0:
                 pass
             else:
-                self.log.error(
-                    "PodmanSpawner.start pull error: {}".format(err)
-                )
+                self.log.error("PodmanSpawner.start pull error: {}".format(err))
                 raise RuntimeError(err)
 
         proc = Popen(cmd, **popen_kwargs)
@@ -208,20 +209,16 @@ class PodmanSelfContainedSpawner(Spawner):
         if proc.returncode == 0:
             self.cid = output[:-2]
         else:
-            self.log.error(
-                    "PodmanSpawner.start error: {}".format(err)
-                    )
+            self.log.error("PodmanSpawner.start error: {}".format(err))
             raise RuntimeError(err)
 
         out, err, rc = self.podman("port", f"{self.standard_jupyter_port}")
         if rc != 0:
-            self.log.error(
-                    "PodmanSpawner.port error: {}".format(err)
-                    )
+            self.log.error("PodmanSpawner.port error: {}".format(err))
             raise RuntimeError(err)
         # out will have the form `0.0.0.0:12345`
-        port = int(out.strip().split(b':')[-1])
-        return ('127.0.0.1', port)
+        port = int(out.strip().split(b":")[-1])
+        return ("127.0.0.1", port)
 
     async def poll(self):
         """Poll the spawned process to see if it is still running.
@@ -236,18 +233,17 @@ class PodmanSelfContainedSpawner(Spawner):
             else:
                 return state["ExitCode"]
         else:
-            self.log.error(
-                    "PodmanSpawner.poll error: {}".format(err)
-                    )
+            self.log.error("PodmanSpawner.poll error: {}".format(err))
             raise RuntimeError(err)
 
     def podman(self, command, *args):
         cmd = ["podman", "container", command, self.cid] + list(args)
         popen_kwargs = dict(
-                stdout=PIPE, stderr=PIPE,
-                start_new_session=True,  # don't forward signals
-                env=self.user_env(os.environ.copy()),
-                )
+            stdout=PIPE,
+            stderr=PIPE,
+            start_new_session=True,  # don't forward signals
+            env=self.user_env(os.environ.copy()),
+        )
         proc = Popen(cmd, **popen_kwargs)
         output, err = proc.communicate()
         return output, err, proc.returncode
@@ -263,12 +259,8 @@ class PodmanSelfContainedSpawner(Spawner):
         if returncode == 0:
             output, err, returncode = self.podman("rm")
             if not returncode == 0:
-                self.log.warn(
-                        "PodmanSpawner.stop warn: {}".format(err)
-                        )
+                self.log.warn("PodmanSpawner.stop warn: {}".format(err))
             return
         else:
-            self.log.error(
-                    "PodmanSpawner.stop error: {}".format(err)
-                    )
+            self.log.error("PodmanSpawner.stop error: {}".format(err))
             raise RuntimeError(err)

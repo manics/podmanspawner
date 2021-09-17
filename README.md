@@ -81,6 +81,7 @@ Most of Jupyters containers change the user to jovyan. Due to the user namespace
 mapping of Podman this user has no access rights on the host system. This means
 that users cannot access their mounted homefolders properly. I see two solutions
 to overcome this situation:
+
 1. Change the jupyter images, so that they use the root user of the container.
    The root user in the container is mapped to the actual running user on the
    host by podman.
@@ -89,6 +90,6 @@ to overcome this situation:
 
 ## ToDos:
 
-* How to use the [podman RestAPI](https://github.com/containers/podman-py). See this [issue](https://github.com/containers/python-podman/issues/16#issuecomment-605439792)?
-* Implement correct move_certs routine. This could be solved when users access
+- How to use the [podman RestAPI](https://github.com/containers/podman-py). See this [issue](https://github.com/containers/python-podman/issues/16#issuecomment-605439792)?
+- Implement correct move_certs routine. This could be solved when users access
   the notebook as root.

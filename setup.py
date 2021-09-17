@@ -15,23 +15,23 @@ setuptools.setup(
     packages=setuptools.find_packages(),
     license="BSD",
     classifiers=[
-        'Intended Audience :: Developers',
-        'Intended Audience :: System Administrators',
-        'Intended Audience :: Science/Research',
-        'License :: OSI Approved :: BSD License',
-        'Programming Language :: Python',
-        'Programming Language :: Python :: 3',
+        "Intended Audience :: Developers",
+        "Intended Audience :: System Administrators",
+        "Intended Audience :: Science/Research",
+        "License :: OSI Approved :: BSD License",
+        "Programming Language :: Python",
+        "Programming Language :: Python :: 3",
     ],
     project_urls={
-        'Documentation': 'https://jupyterhub.readthedocs.io',
-        'Source': 'https://github.com/gatoniel/podmanspawner',
-        'Tracker': 'https://github.com/gatoniel/podmanspawner/issues',
+        "Documentation": "https://jupyterhub.readthedocs.io",
+        "Source": "https://github.com/gatoniel/podmanspawner",
+        "Tracker": "https://github.com/gatoniel/podmanspawner/issues",
     },
     platforms="Linux",
-    python_requires='>=3.5',  # like JupyterHub
+    python_requires=">=3.5",  # like JupyterHub
     entry_points={
-        'jupyterhub.spawners': [
-            'podmanselfcontained = podmanspawner:PodmanSelfContainedSpawner',
+        "jupyterhub.spawners": [
+            "podmanselfcontained = podmanspawner:PodmanSelfContainedSpawner",
         ],
     },
 )
