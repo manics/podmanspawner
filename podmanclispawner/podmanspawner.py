@@ -15,7 +15,7 @@ from traitlets import Unicode
 from jupyterhub.spawner import Spawner
 
 
-class PodmanSelfContainedSpawner(Spawner):
+class PodmanCLISpawner(Spawner):
     """
     A Spawner that uses `subprocess.Popen` to start single-user servers as
     podman containers.
@@ -37,6 +37,7 @@ class PodmanSelfContainedSpawner(Spawner):
         user.
         """,
     )
+
     image = Unicode(
         "docker.io/jupyterhub/singleuser",
         config=True,
@@ -50,11 +51,13 @@ class PodmanSelfContainedSpawner(Spawner):
         as long as the version of jupyterhub in the image is compatible.
         """,
     ).tag(config=True)
+
     pull_image_first = Bool(
         False,
         help="""Run podman pull image, before podman run to circumvent current
         transport problem.""",
     )
+
     pull_image = Unicode(
         allow_none=True,
         help="""When image should be pulled first, where to pull from?""",
@@ -65,6 +68,7 @@ class PodmanSelfContainedSpawner(Spawner):
         help="""The standard port, the Jupyter Notebook is listening in the
         container to.""",
     )
+
     https_proxy = Unicode(
         allow_none=True,
         help="""Is your server running behind a proxy? Podman needs to now, to
@@ -76,6 +80,7 @@ class PodmanSelfContainedSpawner(Spawner):
         help="""These commands are appended to the podman_base_cmd. They are
         then followed by the jupyter_base_cmd""",
     ).tag(config=True)
+
     jupyter_additional_cmds = List(
         default_value=[],
         help="""These commands are appended to the jupyter_base_cmd.""",
@@ -85,12 +90,6 @@ class PodmanSelfContainedSpawner(Spawner):
         False,
         config=True,
         help="""Delete containers when servers are stopped.""",
-    )
-
-    enable_lab = Bool(
-        False,
-        help="""Enable Jupyter Lab in the container via environment variable.
-        Dont forget to change c.Spawner.default_url = '/lab'.""",
     )
 
     env_keep = List(
@@ -132,9 +131,6 @@ class PodmanSelfContainedSpawner(Spawner):
         process.
         """
         env = super().get_env()
-        env = {}
-        if self.enable_lab:
-            env["JUPYTER_ENABLE_LAB"] = "yes"
         env["JUPYTER_IMAGE_SPEC"] = self.image
         return env
 
@@ -181,7 +177,7 @@ class PodmanSelfContainedSpawner(Spawner):
 
         env = self.user_env(os.environ.copy())
 
-        self.log.info("Spawning via Podman command: %s", " ".join(s for s in cmd))
+        self.log.info("Spawning via Podman command: " + " ".join(s for s in cmd))
 
         popen_kwargs = dict(
             stdout=PIPE,
@@ -201,7 +197,7 @@ class PodmanSelfContainedSpawner(Spawner):
             if pull_proc.returncode == 0:
                 pass
             else:
-                self.log.error("PodmanSpawner.start pull error: {}".format(err))
+                self.log.error(f"pull: {err}")
                 raise RuntimeError(err)
 
         proc = Popen(cmd, **popen_kwargs)
@@ -209,12 +205,12 @@ class PodmanSelfContainedSpawner(Spawner):
         if proc.returncode == 0:
             self.cid = output[:-2]
         else:
-            self.log.error("PodmanSpawner.start error: {}".format(err))
+            self.log.error(f"run: {err}")
             raise RuntimeError(err)
 
         out, err, rc = self.podman("port", f"{self.standard_jupyter_port}")
         if rc != 0:
-            self.log.error("PodmanSpawner.port error: {}".format(err))
+            self.log.error(f"port: {err}")
             raise RuntimeError(err)
         # out will have the form `0.0.0.0:12345`
         port = int(out.strip().split(b":")[-1])
@@ -233,7 +229,7 @@ class PodmanSelfContainedSpawner(Spawner):
             else:
                 return state["ExitCode"]
         else:
-            self.log.error("PodmanSpawner.poll error: {}".format(err))
+            self.log.error(f"inspect: {err}")
             raise RuntimeError(err)
 
     def podman(self, command, *args):
@@ -256,11 +252,6 @@ class PodmanSelfContainedSpawner(Spawner):
         The coroutine should return when the process is no longer running.
         """
         output, err, returncode = self.podman("stop")
-        if returncode == 0:
-            output, err, returncode = self.podman("rm")
-            if not returncode == 0:
-                self.log.warn("PodmanSpawner.stop warn: {}".format(err))
-            return
-        else:
-            self.log.error("PodmanSpawner.stop error: {}".format(err))
+        if returncode != 0:
+            self.log.error(f"stop: {err}")
             raise RuntimeError(err)

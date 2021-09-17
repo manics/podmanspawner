@@ -1,6 +1,6 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 
-from .podmanspawner import PodmanSelfContainedSpawner
+from .podmanspawner import PodmanCLISpawner
 
-__all__ = ["PodmanSelfContainedSpawner"]
+__all__ = ["PodmanCLISpawner"]
