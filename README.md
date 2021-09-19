@@ -1,5 +1,6 @@
 # podmanclispawner
 
+[![PyPI version](https://badge.fury.io/py/podmanclispawner.svg)](https://pypi.org/project/podmanclispawner/)
 [![GitHub Workflow](https://github.com/manics/podmanclispawner/workflows/Build/badge.svg?branch=main&event=push)](https://github.com/manics/podmanclispawner/actions)
 
 JupyterHub Podman Spawner.
