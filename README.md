@@ -1,5 +1,7 @@
 # podmanclispawner
 
+[![GitHub Workflow](https://github.com/manics/podmanclispawner/workflows/Build/badge.svg?branch=main&event=push)](https://github.com/manics/podmanclispawner/actions)
+
 JupyterHub Podman Spawner.
 
 This is a fork of https://github.com/gatoniel/podmanspawner without the dependencies on local system users.
