@@ -32,7 +32,7 @@ setuptools.setup(
     install_requires=["jupyterhub", "traitlets>=4.3.2"],
     entry_points={
         "jupyterhub.spawners": [
-            "podmanremote = podmanclispawner:PodmanCLISpawner",
+            "podmancli = podmanclispawner:PodmanCLISpawner",
         ],
     },
 )

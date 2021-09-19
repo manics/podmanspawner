@@ -221,6 +221,8 @@ class PodmanCLISpawner(Spawner):
         If the process is still running, we return None. If it is not running,
         we return the exit code of the process if we have access to it, or 0 otherwise.
         """
+        if not self.cid:
+            return 0
         output, err, returncode = self.podman("inspect")
         if returncode == 0:
             state = json.loads(output)[0]["State"]
@@ -251,6 +253,8 @@ class PodmanCLISpawner(Spawner):
         If `now` is True, terminate the server immediately.
         The coroutine should return when the process is no longer running.
         """
+        if not self.cid:
+            return
         output, err, returncode = self.podman("stop")
         if returncode != 0:
             self.log.error(f"stop: {err}")
