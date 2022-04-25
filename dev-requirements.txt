@@ -2,6 +2,6 @@ build==0.7.0
 jupyterhub==2.2.2
 notebook==6.4.10
 pre-commit==2.18.1
-pytest==7.1.1
+pytest==7.1.2
 pytest-asyncio==0.18.3
 traitlets==5.1.1
