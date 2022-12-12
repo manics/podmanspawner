@@ -4,4 +4,4 @@ notebook==6.5.2
 pre-commit==2.20.0
 pytest==7.2.0
 pytest-asyncio==0.18.3
-traitlets==5.6.0
+traitlets==5.7.1
