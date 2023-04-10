@@ -1,6 +1,6 @@
 build==0.10.0
 jupyterhub==3.1.1
-notebook==6.5.3
+notebook==6.5.4
 pre-commit==3.2.2
 pytest==7.2.2
 pytest-asyncio==0.21.0
