@@ -3,5 +3,5 @@ jupyterhub==3.1.1
 notebook==6.5.4
 pre-commit==3.2.2
 pytest==7.3.1
-pytest-asyncio==0.21.0
+pytest-asyncio==0.21.1
 traitlets==5.9.0
