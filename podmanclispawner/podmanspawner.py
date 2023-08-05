@@ -111,8 +111,8 @@ class PodmanCLISpawner(Spawner):
             self.cid = state["cid"]
 
     def get_state(self):
-        """Save state that is needed to restore this spawner instance after a hub restore.
-        Local processes only need the process id.
+        """Save state that is needed to restore this spawner instance after a hub
+        restore. Local processes only need the process id.
         """
         state = super().get_state()
         if self.cid:
