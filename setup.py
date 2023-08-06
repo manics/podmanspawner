@@ -22,9 +22,8 @@ setuptools.setup(
         "Programming Language :: Python :: 3",
     ],
     project_urls={
-        "Documentation": "https://jupyterhub.readthedocs.io",
-        "Source": "https://github.com/manics/podmanspawner",
-        "Tracker": "https://github.com/manics/podmanspawner/issues",
+        "Source": "https://github.com/manics/podmanclispawner",
+        "Tracker": "https://github.com/manics/podmanclispawner/issues",
     },
     platforms="Linux",
     python_requires=">=3.6",
