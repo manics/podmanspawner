@@ -22,6 +22,10 @@ class PodmanCLISpawner(Spawner):
     Does not work on Windows.
     """
 
+    ip = Unicode(
+        "0.0.0.0", help="The IP address the single-user server should listen on"
+    ).tag(config=True)
+
     popen_kwargs = Dict(
         help="""Extra keyword arguments to pass to Popen
         when spawning single-user servers.
