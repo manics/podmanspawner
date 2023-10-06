@@ -26,6 +26,14 @@ class PodmanCLISpawner(Spawner):
         "0.0.0.0", help="The IP address the single-user server should listen on"
     ).tag(config=True)
 
+    podman_executable = Unicode(
+        "podman",
+        help="""The podman executable to use for all commands.
+        For example, you could use an alternative podman/docker compatible command.
+        Defaults to `podman` on the PATH.
+        """,
+    ).tag(config=True)
+
     popen_kwargs = Dict(
         help="""Extra keyword arguments to pass to Popen
         when spawning single-user servers.
@@ -156,7 +164,7 @@ class PodmanCLISpawner(Spawner):
         self.port = self.standard_jupyter_port
 
         podman_base_cmd = [
-            "podman",
+            self.podman_executable,
             "run",
             "-d",
             "--publish",
@@ -195,7 +203,7 @@ class PodmanCLISpawner(Spawner):
         # https://stackoverflow.com/questions/2502833/store-output-of-subprocess-popen-call-in-a-string
 
         if self.pull_image_first:
-            pull_cmd = ["podman", "pull", self.pull_image]
+            pull_cmd = [self.podman_executable, "pull", self.pull_image]
             pull_proc = Popen(pull_cmd, **popen_kwargs)
             output, err = pull_proc.communicate()
             if pull_proc.returncode == 0:
@@ -239,7 +247,7 @@ class PodmanCLISpawner(Spawner):
             raise RuntimeError(err)
 
     def podman(self, command, *args):
-        cmd = ["podman", "container", command, self.cid] + list(args)
+        cmd = [self.podman_executable, "container", command, self.cid] + list(args)
         popen_kwargs = dict(
             stdout=PIPE,
             stderr=PIPE,
