@@ -209,7 +209,7 @@ class PodmanCLISpawner(Spawner):
             if pull_proc.returncode == 0:
                 pass
             else:
-                self.log.error(f"pull: {err}")
+                self.log.error(f"pull: {err.decode()}")
                 raise RuntimeError(err)
 
         proc = Popen(cmd, **popen_kwargs)
@@ -217,12 +217,12 @@ class PodmanCLISpawner(Spawner):
         if proc.returncode == 0:
             self.cid = output[:-2]
         else:
-            self.log.error(f"run: {err}")
+            self.log.error(f"run: {err.decode()}")
             raise RuntimeError(err)
 
         out, err, rc = self.podman("port", f"{self.standard_jupyter_port}")
         if rc != 0:
-            self.log.error(f"port: {err}")
+            self.log.error(f"port: {err.decode()}")
             raise RuntimeError(err)
         # out will have the form `0.0.0.0:12345`
         port = int(out.strip().split(b":")[-1])
@@ -243,7 +243,7 @@ class PodmanCLISpawner(Spawner):
             else:
                 return state["ExitCode"]
         else:
-            self.log.error(f"inspect: {err}")
+            self.log.error(f"inspect: {err.decode()}")
             raise RuntimeError(err)
 
     def podman(self, command, *args):
@@ -269,5 +269,5 @@ class PodmanCLISpawner(Spawner):
             return
         output, err, returncode = self.podman("stop")
         if returncode != 0:
-            self.log.error(f"stop: {err}")
+            self.log.error(f"stop: {err.decode()}")
             raise RuntimeError(err)
