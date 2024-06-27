@@ -51,7 +51,7 @@ class PodmanCLISpawner(Spawner):
     )
 
     image = Unicode(
-        "docker.io/jupyterhub/singleuser",
+        "quay.io/jupyterhub/singleuser",
         config=True,
         help="""The image to use for single-user servers.
         This image should have the same version of jupyterhub as
