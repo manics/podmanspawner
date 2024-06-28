@@ -232,6 +232,10 @@ class PodmanCLISpawner(Spawner):
         """Poll the spawned process to see if it is still running.
         If the process is still running, we return None. If it is not running,
         we return the exit code of the process if we have access to it, or 0 otherwise.
+        If there's an error this probably means the container exited and was removed,
+        return 0.
+
+        https://github.com/jupyterhub/jupyterhub/blob/5.0.0/jupyterhub/spawner.py#L1375-L1393
         """
         if not self.cid:
             return 0
@@ -244,7 +248,7 @@ class PodmanCLISpawner(Spawner):
                 return state["ExitCode"]
         else:
             self.log.error(f"inspect: {err.decode()}")
-            raise RuntimeError(err)
+            return 0
 
     def podman(self, command, *args):
         cmd = [self.podman_executable, "container", command, self.cid] + list(args)
