@@ -15,13 +15,17 @@ For example, this means it can be used as a JupyterHub spawner for BinderHub, wi
 
 ### Technical
 
-`subprocess.Popen` is used to make calls to Podman.
+`subprocess` is used to make calls to the Podman executable.
 See also this [issue](https://github.com/jupyterhub/dockerspawner/issues/360) on
 dockerspawner.
 
 ## Installation
 
-Via pip:
+Install latest release:
+
+    pip install podmanclispawner
+
+Install latest development branch:
 
     pip install git+https://github.com/manics/podmanclispawner
 
@@ -30,3 +34,8 @@ Via pip:
 ```python
 c.JupyterHub.spawner_class = 'podmancli'
 ```
+
+For a full example see [`example/jupyterhub_config.py`](example/jupyterhub_config.py):
+
+    cd example
+    jupyterhub -f jupyterhub_config.py
