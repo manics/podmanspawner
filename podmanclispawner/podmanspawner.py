@@ -1,11 +1,10 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 
-# copied from the jupyterhub.spawner.LocalProcessSpawner
-
+from asyncio import create_subprocess_exec
+from asyncio.subprocess import PIPE
 import json
 import os
-from subprocess import Popen, PIPE
 from traitlets import Bool
 from traitlets import Dict
 from traitlets import Integer
@@ -17,7 +16,7 @@ from jupyterhub.spawner import Spawner
 
 class PodmanCLISpawner(Spawner):
     """
-    A Spawner that uses `subprocess.Popen` to start single-user servers as
+    A Spawner that uses the podman executable to start single-user servers as
     podman containers.
     Does not work on Windows.
     """
@@ -152,7 +151,6 @@ class PodmanCLISpawner(Spawner):
         self.port = self.standard_jupyter_port
 
         podman_base_cmd = [
-            self.podman_executable,
             "run",
             "-d",
             "--publish",
@@ -177,7 +175,10 @@ class PodmanCLISpawner(Spawner):
 
         env = self.user_env(os.environ.copy())
 
-        self.log.info("Spawning via Podman command: " + " ".join(s for s in cmd))
+        self.log.info(
+            f"Spawning via Podman command: {self.podman_executable} "
+            + " ".join(s for s in cmd)
+        )
 
         popen_kwargs = dict(
             stdout=PIPE,
@@ -190,15 +191,17 @@ class PodmanCLISpawner(Spawner):
 
         # https://stackoverflow.com/questions/2502833/store-output-of-subprocess-popen-call-in-a-string
 
-        proc = Popen(cmd, **popen_kwargs)
-        output, err = proc.communicate()
+        proc = await create_subprocess_exec(
+            self.podman_executable, *cmd, **popen_kwargs
+        )
+        output, err = await proc.communicate()
         if proc.returncode == 0:
             self.cid = output[:-2]
         else:
             self.log.error(f"run: {err.decode()}")
             raise RuntimeError(err)
 
-        out, err, rc = self.podman("port", f"{self.standard_jupyter_port}")
+        out, err, rc = await self.podman("port", f"{self.standard_jupyter_port}")
         if rc != 0:
             self.log.error(f"port: {err.decode()}")
             raise RuntimeError(err)
@@ -217,7 +220,7 @@ class PodmanCLISpawner(Spawner):
         """
         if not self.cid:
             return 0
-        output, err, returncode = self.podman("inspect")
+        output, err, returncode = await self.podman("inspect")
         if returncode == 0:
             state = json.loads(output)[0]["State"]
             if state["Running"]:
@@ -228,16 +231,18 @@ class PodmanCLISpawner(Spawner):
             self.log.error(f"inspect: {err.decode()}")
             return 0
 
-    def podman(self, command, *args):
-        cmd = [self.podman_executable, "container", command, self.cid] + list(args)
+    async def podman(self, command, *args):
+        cmd = ["container", command, self.cid] + list(args)
         popen_kwargs = dict(
             stdout=PIPE,
             stderr=PIPE,
             start_new_session=True,  # don't forward signals
             env=self.user_env(os.environ.copy()),
         )
-        proc = Popen(cmd, **popen_kwargs)
-        output, err = proc.communicate()
+        proc = await create_subprocess_exec(
+            self.podman_executable, *cmd, **popen_kwargs
+        )
+        output, err = await proc.communicate()
         return output, err, proc.returncode
 
     async def stop(self, now=False):
@@ -249,7 +254,7 @@ class PodmanCLISpawner(Spawner):
         """
         if not self.cid:
             return
-        output, err, returncode = self.podman("stop")
+        output, err, returncode = await self.podman("stop")
         if returncode != 0:
             self.log.error(f"stop: {err.decode()}")
             raise RuntimeError(err)
