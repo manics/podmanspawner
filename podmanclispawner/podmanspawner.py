@@ -64,17 +64,6 @@ class PodmanCLISpawner(Spawner):
         """,
     ).tag(config=True)
 
-    pull_image_first = Bool(
-        False,
-        help="""Run podman pull image, before podman run to circumvent current
-        transport problem.""",
-    )
-
-    pull_image = Unicode(
-        allow_none=True,
-        help="""When image should be pulled first, where to pull from?""",
-    )
-
     standard_jupyter_port = Integer(
         8888,
         help="""The standard port, the Jupyter Notebook is listening in the
@@ -83,8 +72,7 @@ class PodmanCLISpawner(Spawner):
 
     https_proxy = Unicode(
         allow_none=True,
-        help="""Is your server running behind a proxy? Podman needs to now, to
-        pull images correctly.""",
+        help="""Is your server running behind a proxy?""",
     ).tag(config=True)
 
     podman_additional_cmds = List(
@@ -201,16 +189,6 @@ class PodmanCLISpawner(Spawner):
         popen_kwargs["env"] = env
 
         # https://stackoverflow.com/questions/2502833/store-output-of-subprocess-popen-call-in-a-string
-
-        if self.pull_image_first:
-            pull_cmd = [self.podman_executable, "pull", self.pull_image]
-            pull_proc = Popen(pull_cmd, **popen_kwargs)
-            output, err = pull_proc.communicate()
-            if pull_proc.returncode == 0:
-                pass
-            else:
-                self.log.error(f"pull: {err.decode()}")
-                raise RuntimeError(err)
 
         proc = Popen(cmd, **popen_kwargs)
         output, err = proc.communicate()
