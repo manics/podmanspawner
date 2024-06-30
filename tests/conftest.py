@@ -5,6 +5,7 @@ import pytest_asyncio
 from jupyterhub.tests.mocking import MockHub
 import os
 import socket
+from subprocess import check_output
 import sys
 from traitlets.config import Config
 
@@ -15,15 +16,43 @@ from podmanclispawner import PodmanCLISpawner
 MockHub.hub_ip = "0.0.0.0"
 
 
+INTERNAL_HOST_LOOKUP = "host.containers.internal"
+
+
 def _get_host_default_ip():
     """
-    IP associated with the default route
-    https://stackoverflow.com/a/28950776
+    Get the IP to connect to the host hub
     """
-    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
-        # doesn't even have to be reachable
-        s.connect(("10.255.255.255", 1))
-        return s.getsockname()[0]
+    version = check_output(["podman", "version", "-f", "{{.Version}}"])
+    major = int(version.decode().split(".", 1)[0])
+    if major < 5:
+        # IP associated with the default route https://stackoverflow.com/a/28950776
+        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
+            # doesn't even have to be reachable
+            s.connect(("10.255.255.255", 1))
+            return s.getsockname()[0]
+
+    # Using the iface associated with the default route no longer works
+    # with Podman 5+ as the container shares the host IP:
+    # https://blog.podman.io/2024/03/podman-5-0-breaking-changes-in-detail/
+    # Instead use the host.containers.internal host entry
+    out = check_output(
+        [
+            "podman",
+            "run",
+            "--rm",
+            "docker.io/library/busybox",
+            "cat",
+            "/etc/hosts",
+        ]
+    )
+    for line in out.decode().splitlines():
+        if not line.strip() or line.strip().startswith("#"):
+            continue
+        ip, addresses = line.split(None, 1)
+        if INTERNAL_HOST_LOOKUP in addresses.split():
+            return ip
+    raise RuntimeError(f"Failed to lookup {INTERNAL_HOST_LOOKUP} inside a container")
 
 
 # https://docs.pytest.org/en/latest/example/parametrize.html#apply-indirect-on-particular-arguments
