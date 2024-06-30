@@ -13,6 +13,8 @@ from traitlets import Unicode
 
 from jupyterhub.spawner import Spawner
 
+from typing import Any, Optional
+
 
 class PodmanCLISpawner(Spawner):
     """
@@ -97,7 +99,7 @@ class PodmanCLISpawner(Spawner):
         to keep these env variables in the container.""",
     )
 
-    def load_state(self, state):
+    def load_state(self, state: dict):
         """Restore state about spawned single-user server after a hub restart.
         Local processes only need the process id.
         """
@@ -105,7 +107,7 @@ class PodmanCLISpawner(Spawner):
         if "cid" in state:
             self.cid = state["cid"]
 
-    def get_state(self):
+    def get_state(self) -> dict:
         """Save state that is needed to restore this spawner instance after a hub
         restore. Local processes only need the process id.
         """
@@ -119,13 +121,13 @@ class PodmanCLISpawner(Spawner):
         super().clear_state()
         self.cid = None
 
-    def user_env(self, env):
+    def user_env(self, env: dict[str, str]) -> dict[str, str]:
         """Augment environment of spawned process with user specific env variables."""
         if self.https_proxy:
             env["https_proxy"] = self.https_proxy
         return env
 
-    def get_env(self):
+    def get_env(self) -> dict[str, str]:
         """Get the complete set of environment variables to be set in the spawned
         process.
         """
@@ -145,7 +147,7 @@ class PodmanCLISpawner(Spawner):
         """
         raise NotImplementedError
 
-    async def start(self):
+    async def start(self) -> tuple[str, int]:
         """Start the single-user server."""
         # get_args() will set --port
         self.port = self.standard_jupyter_port
@@ -180,7 +182,7 @@ class PodmanCLISpawner(Spawner):
             + " ".join(s for s in cmd)
         )
 
-        popen_kwargs = dict(
+        popen_kwargs: dict[str, Any] = dict(
             stdout=PIPE,
             stderr=PIPE,
             start_new_session=True,  # don't forward signals
@@ -209,7 +211,7 @@ class PodmanCLISpawner(Spawner):
         port = int(out.strip().split(b":")[-1])
         return ("127.0.0.1", port)
 
-    async def poll(self):
+    async def poll(self) -> Optional[int]:
         """Poll the spawned process to see if it is still running.
         If the process is still running, we return None. If it is not running,
         we return the exit code of the process if we have access to it, or 0 otherwise.
@@ -231,9 +233,10 @@ class PodmanCLISpawner(Spawner):
             self.log.error(f"inspect: {err.decode()}")
             return 0
 
-    async def podman(self, command, *args):
+    async def podman(self, command: str, *args) -> tuple[bytes, bytes, Optional[int]]:
         cmd = ["container", command, self.cid] + list(args)
-        popen_kwargs = dict(
+        # https://github.com/python/mypy/issues/5382#issuecomment-417433738
+        popen_kwargs: dict[str, Any] = dict(
             stdout=PIPE,
             stderr=PIPE,
             start_new_session=True,  # don't forward signals
