@@ -51,7 +51,7 @@ class PodmanCLISpawner(Spawner):
     )
 
     image = Unicode(
-        "docker.io/jupyterhub/singleuser",
+        "quay.io/jupyterhub/singleuser",
         config=True,
         help="""The image to use for single-user servers.
         This image should have the same version of jupyterhub as
@@ -209,7 +209,7 @@ class PodmanCLISpawner(Spawner):
             if pull_proc.returncode == 0:
                 pass
             else:
-                self.log.error(f"pull: {err}")
+                self.log.error(f"pull: {err.decode()}")
                 raise RuntimeError(err)
 
         proc = Popen(cmd, **popen_kwargs)
@@ -217,12 +217,12 @@ class PodmanCLISpawner(Spawner):
         if proc.returncode == 0:
             self.cid = output[:-2]
         else:
-            self.log.error(f"run: {err}")
+            self.log.error(f"run: {err.decode()}")
             raise RuntimeError(err)
 
         out, err, rc = self.podman("port", f"{self.standard_jupyter_port}")
         if rc != 0:
-            self.log.error(f"port: {err}")
+            self.log.error(f"port: {err.decode()}")
             raise RuntimeError(err)
         # out will have the form `0.0.0.0:12345`
         port = int(out.strip().split(b":")[-1])
@@ -232,6 +232,10 @@ class PodmanCLISpawner(Spawner):
         """Poll the spawned process to see if it is still running.
         If the process is still running, we return None. If it is not running,
         we return the exit code of the process if we have access to it, or 0 otherwise.
+        If there's an error this probably means the container exited and was removed,
+        return 0.
+
+        https://github.com/jupyterhub/jupyterhub/blob/5.0.0/jupyterhub/spawner.py#L1375-L1393
         """
         if not self.cid:
             return 0
@@ -243,8 +247,8 @@ class PodmanCLISpawner(Spawner):
             else:
                 return state["ExitCode"]
         else:
-            self.log.error(f"inspect: {err}")
-            raise RuntimeError(err)
+            self.log.error(f"inspect: {err.decode()}")
+            return 0
 
     def podman(self, command, *args):
         cmd = [self.podman_executable, "container", command, self.cid] + list(args)
@@ -269,5 +273,5 @@ class PodmanCLISpawner(Spawner):
             return
         output, err, returncode = self.podman("stop")
         if returncode != 0:
-            self.log.error(f"stop: {err}")
+            self.log.error(f"stop: {err.decode()}")
             raise RuntimeError(err)
