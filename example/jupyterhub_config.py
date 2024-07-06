@@ -27,4 +27,6 @@ c = get_config()
 c.JupyterHub.authenticator_class = "dummy"
 c.JupyterHub.hub_connect_ip = get_host_ip()
 c.JupyterHub.spawner_class = "podmancli"
+
+c.PodmanCLISpawner.image = "quay.io/jupyter/base-notebook:latest"
 c.PodmanCLISpawner.remove = True
