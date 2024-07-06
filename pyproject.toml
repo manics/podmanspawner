@@ -1,0 +1,44 @@
+# https://setuptools.pypa.io/en/latest/userguide/pyproject_config.html
+
+[build-system]
+requires = ["setuptools>=61", "setuptools_scm>=7"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "podmanclispawner"
+dynamic = ["version"]
+authors = [
+  {name = "Simon Li"},
+  {name = "Niklas Netter"},
+]
+description = "PodmanCLISpawner for JupyterHub"
+readme = "README.md"
+requires-python = ">=3.7"
+license = {text = "BSD"}
+keywords = ["jupyterhub", "spawner"]
+classifiers = [
+  "Framework :: Jupyter",
+  "Intended Audience :: Developers",
+  "Intended Audience :: System Administrators",
+  "Intended Audience :: Science/Research",
+  "License :: OSI Approved :: BSD License",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3",
+]
+dependencies = [
+  "jupyterhub>=4",
+  "traitlets>=5",
+]
+
+[project.entry-points."jupyterhub.spawners"]
+podmancli = "podmanclispawner:PodmanCLISpawner"
+
+[project.urls]
+Homepage = "https://github.com/manics/podmanclispawner"
+Source = "https://github.com/manics/podmanclispawner"
+Tracker = "https://github.com/manics/podmanclispawner/issues"
+
+[tool.setuptools.packages.find]
+include = ["podmanclispawner*"]
+
+[tool.setuptools_scm]
